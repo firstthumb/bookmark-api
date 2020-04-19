@@ -2,7 +2,6 @@
 
 build:
 	go fmt ./...
-	golangci-lint run
 	env GOOS=linux go build -ldflags="-s -w" -o bin/bookmark/lambda/main function/lambda/bookmark_lambda.go 
 	env GOOS=linux go build -ldflags="-s -w" -o bin/bookmark/worker/main function/worker/bookmark_worker.go 
 lint:
