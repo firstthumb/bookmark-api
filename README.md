@@ -1,4 +1,5 @@
 # Bookmark API
+[![Build Status](https://travis-ci.org/firstthumb/bookmark-api.svg?branch=master)](https://travis-ci.org/firstthumb/bookmark-api)
 
 This is simple bookmark api that you could handle your bookmarks easily
 
