@@ -1,0 +1,113 @@
+service: bookmark-api
+
+frameworkVersion: ">=1.28.0 <2.0.0"
+
+plugins:
+  - serverless-offline
+
+provider:
+  name: aws
+  runtime: go1.x
+  stage: ${opt:stage, 'dev'}
+  timeout: 10
+  memorySize: 512
+  region: us-east-2
+  versionFunctions: false
+  tags:
+    OWNER: ekocaman
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:DescribeTable
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:*:*:*"
+    - Effect: Allow
+      Action:
+        - sqs:GetQueueUrl
+        - sqs:DeleteMessage
+        - sqs:ReceiveMessage
+        - sqs:SendMessage
+      Resource: arn:aws:sqs:*:*:*
+
+  environment: ${file(./config/${self:provider.stage}.yml)}
+
+custom:
+  serverless-offline:
+    useDocker: true
+  endpoints:
+    dynamodb-url: "http://localhost:8000"
+  region: ${self:provider.region}
+  stage: ${opt:stage, self:provider.stage}
+  prefix: ${self:custom.stage}-${self:service}
+  dynamo-bookmark-name: ${self:custom.prefix}-bookmark-catalog
+  sqs-bookmark-name: ${self:custom.prefix}-processing-queue
+  dynamodb:
+    stages:
+      - dev
+    start:
+      port: 8000
+      migrate: true
+      seed: false
+
+package:
+  exclude:
+    - ./**
+    - .git/**
+    - .vscode/**
+    - .idea/**
+    - .dynamodb/**
+    - .test/**
+    - node_modules/**
+  include:
+    - ./bin/**
+
+functions:
+  bookmark:
+    handler: bin/bookmark/lambda/main
+    events:
+      - http:
+          path: /api/v1/bookmarks
+          method: ANY
+      - http:
+          path: /api/v1/bookmarks/{any+}
+          method: ANY
+    tags:
+      Service: bookmark
+
+  worker:
+    handler: bin/bookmark/worker/main
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - BookmarkQueueExample
+              - Arn
+          batchSize: 10
+
+resources:
+  Resources:
+    BookmarkCatalog:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.dynamo-bookmark-name}
+        AttributeDefinitions:
+          - AttributeName: hashkey
+            AttributeType: S
+        KeySchema:
+          - AttributeName: hashkey
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+
+    BookmarkQueueExample:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:custom.sqs-bookmark-name}
+        MessageRetentionPeriod: 1209600
+        VisibilityTimeout: 60

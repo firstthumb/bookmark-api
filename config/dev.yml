@@ -1,0 +1,5 @@
+ENV: dev
+REGION: ${self:custom.region}
+DYNAMO_TABLE_BOOKMARK: ${self:custom.dynamo-bookmark-name}
+SQS_QUEUE_BOOKMARK: ${self:custom.sqs-bookmark-name}
+CONFIG_DYNAMODB_ENDPOINT: ${self:custom.endpoints.dynamodb-url}

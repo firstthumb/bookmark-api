@@ -1,0 +1,27 @@
+{
+  "editor.formatOnPaste": true,
+  "editor.formatOnSave": true,
+  "go.useLanguageServer": true,
+  "go.toolsEnvVars": {
+    "GO111MODULE": "on"
+  },
+  "go.formatTool": "goimports",
+  "go.lintTool": "golangci-lint",
+  "go.alternateTools": {
+    "golangci-lint": "${workspaceFolder}/bin/golangci-lint"
+  },
+  "go.lintFlags": ["--fast"],
+  "go.languageServerExperimentalFeatures": {
+    "format": true,
+    "diagnostics": true,
+    "documentLink": true
+  },
+  "[go]": {
+    "editor.insertSpaces": false,
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": true
+    },
+    "editor.tabSize": 4
+  }
+}
