@@ -27,6 +27,8 @@ At this time, you have a RESTful API server running at `http://127.0.0.1:8080`. 
 * `GET /bookmarks/:id`: returns the detailed information of an bookmark
 * `PUT /bookmarks/:id`: updates an existing bookmark
 * `DELETE /bookmarks/:id`: deletes an bookmark
+* `POST /bookmarks/:id/tags/:tag`: adds tag to the bookmark
+* `DELETE /bookmarks/:id/tags/:tag`: deletes tag to the bookmark
 
 ## Project Layout
  

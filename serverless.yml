@@ -96,11 +96,28 @@ resources:
       Properties:
         TableName: ${self:custom.dynamo-bookmark-name}
         AttributeDefinitions:
-          - AttributeName: hashkey
+          - AttributeName: id
             AttributeType: S
         KeySchema:
-          - AttributeName: hashkey
+          - AttributeName: id
             KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+    TagCatalog:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.dynamo-tag-name}
+        AttributeDefinitions:
+          - AttributeName: tag
+            AttributeType: S
+          - AttributeName: bookmark_id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: tag
+            KeyType: HASH
+          - AttributeName: bookmark_id
+            KeyType: RANGE
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1

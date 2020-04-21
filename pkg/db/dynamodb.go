@@ -12,6 +12,7 @@ import (
 )
 
 const TableBookmark = "Bookmark"
+const TableTag = "Tag"
 
 func GenerateID() string {
 	return uuid.New().String()
