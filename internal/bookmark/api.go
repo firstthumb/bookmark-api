@@ -73,7 +73,7 @@ func (r *resource) create(c *gin.Context) {
 		return
 	}
 
-	response := BookmarkResponse{
+	response := &BookmarkResponse{
 		ID:   result.ID,
 		Name: result.Name,
 		Url:  result.Url,
@@ -100,7 +100,7 @@ func (r *resource) get(c *gin.Context) {
 		return
 	}
 
-	response := BookmarkResponse{
+	response := &BookmarkResponse{
 		ID:   result.ID,
 		Name: result.Name,
 		Url:  result.Url,
@@ -139,7 +139,7 @@ func (r *resource) update(c *gin.Context) {
 		return
 	}
 
-	response := BookmarkResponse{
+	response := &BookmarkResponse{
 		ID:   result.ID,
 		Name: result.Name,
 		Url:  result.Url,

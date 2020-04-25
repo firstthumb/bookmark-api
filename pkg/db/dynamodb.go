@@ -11,8 +11,21 @@ import (
 	"github.com/guregu/dynamo"
 )
 
-const TableBookmark = "Bookmark"
-const TableTag = "Tag"
+func GetTableBookmark() string {
+	v := os.Getenv("DYNAMO_TABLE_BOOKMARK")
+	if v == "" {
+		return "dev-bookmark-api-bookmark-table"
+	}
+	return os.Getenv("DYNAMO_TABLE_BOOKMARK")
+}
+
+func GetTableTag() string {
+	v := os.Getenv("DYNAMO_TABLE_TAG")
+	if v == "" {
+		return "dev-bookmark-api-tag-table"
+	}
+	return os.Getenv("DYNAMO_TABLE_TAG")
+}
 
 func GenerateID() string {
 	return uuid.New().String()

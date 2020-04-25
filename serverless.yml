@@ -44,7 +44,8 @@ custom:
   region: ${self:provider.region}
   stage: ${opt:stage, self:provider.stage}
   prefix: ${self:custom.stage}-${self:service}
-  dynamo-bookmark-name: ${self:custom.prefix}-bookmark-catalog
+  dynamo-bookmark-name: ${self:custom.prefix}-bookmark-table
+  dynamo-tag-name: ${self:custom.prefix}-tag-table
   sqs-bookmark-name: ${self:custom.prefix}-processing-queue
   dynamodb:
     stages:
@@ -67,18 +68,32 @@ package:
     - ./bin/**
 
 functions:
+  auth:
+    handler: bin/auth/lambda/main
+    cors: true
   bookmark:
     handler: bin/bookmark/lambda/main
     events:
       - http:
+          path: /signin/google
+          method: GET
+      - http:
+          path: /callback
+          method: GET
+      - http:
+          path: /auth/{any+}
+          method: ANY
+          authorizer: auth
+      - http:
           path: /api/v1/bookmarks
           method: ANY
+          authorizer: auth
       - http:
           path: /api/v1/bookmarks/{any+}
           method: ANY
+          authorizer: auth
     tags:
       Service: bookmark
-
   worker:
     handler: bin/bookmark/worker/main
     events:

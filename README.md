@@ -40,8 +40,10 @@ At this time, you have a RESTful API server running at `http://127.0.0.1:8080`. 
 ├── function             lambda functions
 │   ├── lambda           lambda main function for HTTP
 │   └─- worker           lambda main function for SQS
+│   └─- authorizer       lambda authorizer
 ├── internal             private application
 │   ├── bookmark         bookmark features
+│   ├── auth             auth features
 │   ├── di               wire configuration
 │   ├── entity           entity definitions
 │   └── errors           error types
