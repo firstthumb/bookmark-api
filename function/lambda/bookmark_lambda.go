@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	ginadapter "github.com/awslabs/aws-lambda-go-api-proxy/gin"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
@@ -20,9 +21,20 @@ func init() {
 		panic(err)
 	}
 
+	authApi, err := di.CreateAuthApi()
+	if err != nil {
+		panic(err)
+	}
+
 	r := gin.Default()
 	r.Use(gin.Logger())
-	bookmarkApi.RegisterHandlers(r.Group("/api/v1"))
+	r.Use(cors.Default())
+	r.Use(authApi.Session())
+
+	authApi.RegisterSigninHandlers(r.Group("/"))
+	authApi.RegisterAuthHandlers(r.Group("/"))
+
+	bookmarkApi.RegisterHandlers(r.Group("/api/v1", authApi.GetAuthMiddleware().MiddlewareFunc()))
 
 	ginLambda = ginadapter.New(r)
 }

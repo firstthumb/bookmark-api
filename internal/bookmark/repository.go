@@ -42,7 +42,7 @@ func (r *repository) Create(ctx context.Context, bookmark entity.Bookmark) (enti
 	tx := r.db.WriteTx()
 
 	// Create Bookmark
-	tableBookmark := r.db.Table(db.TableBookmark)
+	tableBookmark := r.db.Table(db.GetTableBookmark())
 
 	bookmark.ID = db.GenerateID()
 	bookmark.CreatedAt = time.Now()
@@ -50,14 +50,14 @@ func (r *repository) Create(ctx context.Context, bookmark entity.Bookmark) (enti
 	tx.Put(tableBookmark.Put(bookmark))
 
 	// Create Tags
-	tableTag := r.db.Table(db.TableTag)
+	tableTag := r.db.Table(db.GetTableTag())
 	for _, tag := range bookmark.Tags {
 		tx.Put(tableTag.Put(entity.Tag{Tag: tag, BookmarkID: bookmark.ID}))
 	}
 
 	err := tx.Run()
 	if err != nil {
-		logger.Errorw("Failed to create bookmark")
+		logger.Errorw("Failed to create bookmark", zap.Error(err))
 		return entity.Bookmark{}, err
 	}
 
@@ -70,12 +70,12 @@ func (r *repository) Get(ctx context.Context, id string) (entity.Bookmark, error
 		_ = logger.Sync()
 	}()
 
-	table := r.db.Table(db.TableBookmark)
+	table := r.db.Table(db.GetTableBookmark())
 
 	var result entity.Bookmark
 	err := table.Get("id", id).One(&result)
 	if err != nil {
-		logger.Errorw("Failed to get bookmark")
+		logger.Errorw("Failed to get bookmark", zap.Error(err))
 		switch err {
 		case dynamo.ErrNotFound:
 			return entity.Bookmark{}, errors.ErrNotFound
@@ -98,7 +98,7 @@ func (r *repository) Update(ctx context.Context, bookmark entity.Bookmark) (enti
 		return entity.Bookmark{}, err
 	}
 
-	table := r.db.Table((db.TableBookmark))
+	table := r.db.Table((db.GetTableBookmark()))
 
 	// Don't update tags here
 	freshBookmark.Name = bookmark.Name
@@ -106,7 +106,7 @@ func (r *repository) Update(ctx context.Context, bookmark entity.Bookmark) (enti
 	freshBookmark.UpdatedAt = time.Now()
 	err = table.Put(freshBookmark).Run()
 	if err != nil {
-		logger.Errorw("Failed to update bookmark", zap.String("ID", freshBookmark.ID))
+		logger.Errorw("Failed to update bookmark", zap.String("ID", freshBookmark.ID), zap.Error(err))
 		return entity.Bookmark{}, err
 	}
 
@@ -126,8 +126,8 @@ func (r *repository) Delete(ctx context.Context, id string) error {
 
 	tx := r.db.WriteTx()
 
-	tableBookmark := r.db.Table((db.TableBookmark))
-	tableTag := r.db.Table((db.TableTag))
+	tableBookmark := r.db.Table((db.GetTableBookmark()))
+	tableTag := r.db.Table((db.GetTableTag()))
 
 	tx.Delete(tableBookmark.Delete("id", id))
 	for _, tag := range bookmark.Tags {
@@ -136,7 +136,7 @@ func (r *repository) Delete(ctx context.Context, id string) error {
 
 	err = tx.Run()
 	if err != nil {
-		logger.Errorw("Failed to delete bookmark", zap.String("ID", id))
+		logger.Errorw("Failed to delete bookmark", zap.String("ID", id), zap.Error(err))
 		return err
 	}
 
@@ -155,24 +155,24 @@ func (r *repository) AddTag(ctx context.Context, tag entity.Tag) error {
 	}
 
 	if funk.Contains(bookmark.Tags, tag.Tag) {
-		logger.Errorw("Already has tag", zap.String("BookmarkID", tag.BookmarkID), zap.String("Tag", tag.Tag))
+		logger.Errorw("Already has tag", zap.String("BookmarkID", tag.BookmarkID), zap.String("Tag", tag.Tag), zap.Error(err))
 		return errors.ErrAlreadyExist
 	}
 
 	tx := r.db.WriteTx()
 
 	// Update Bookmark
-	tableBookmark := r.db.Table(db.TableBookmark)
+	tableBookmark := r.db.Table(db.GetTableBookmark())
 	bookmark.Tags = append(bookmark.Tags, tag.Tag)
 	tx.Put(tableBookmark.Put(bookmark))
 
 	// Add Tag
-	tableTag := r.db.Table(db.TableTag)
+	tableTag := r.db.Table(db.GetTableTag())
 	tx.Put(tableTag.Put(tag))
 
 	err = tx.Run()
 	if err != nil {
-		logger.Errorw("Failed to create tag")
+		logger.Errorw("Failed to create tag", zap.Error(err))
 		return err
 	}
 
@@ -191,24 +191,24 @@ func (r *repository) RemoveTag(ctx context.Context, tag entity.Tag) error {
 	}
 
 	if !funk.Contains(bookmark.Tags, tag.Tag) {
-		logger.Errorw("Bookmark has not tag", zap.String("BookmarkID", tag.BookmarkID), zap.String("Tag", tag.Tag))
+		logger.Errorw("Bookmark has not tag", zap.String("BookmarkID", tag.BookmarkID), zap.String("Tag", tag.Tag), zap.Error(err))
 		return errors.ErrInvalidParam
 	}
 
 	tx := r.db.WriteTx()
 
 	// Update Bookmark
-	tableBookmark := r.db.Table(db.TableBookmark)
+	tableBookmark := r.db.Table(db.GetTableBookmark())
 	bookmark.Tags = funk.FilterString(bookmark.Tags, func(s string) bool { return s != tag.Tag })
 	tx.Put(tableBookmark.Put(bookmark))
 
 	// Add Tag
-	tableTag := r.db.Table(db.TableTag)
+	tableTag := r.db.Table(db.GetTableTag())
 	tx.Put(tableTag.Put(tag))
 
 	err = tx.Run()
 	if err != nil {
-		logger.Errorw("Failed to create tag")
+		logger.Errorw("Failed to create tag", zap.Error(err))
 		return err
 	}
 
