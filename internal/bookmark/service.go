@@ -12,12 +12,15 @@ type Service interface {
 	Get(ctx context.Context, id string) (Bookmark, error)
 	Update(ctx context.Context, bookmark Bookmark) (Bookmark, error)
 	Delete(ctx context.Context, id string) error
+	AddTag(ctx context.Context, bookmarkId string, tag string) error
+	RemoveTag(ctx context.Context, bookmarkId string, tag string) error
 }
 
 type Bookmark struct {
 	ID   string
 	Name string
 	Url  string
+	Tags []string
 }
 
 func (b *Bookmark) getEntity() entity.Bookmark {
@@ -25,14 +28,16 @@ func (b *Bookmark) getEntity() entity.Bookmark {
 		ID:   b.ID,
 		Name: b.Name,
 		Url:  b.Url,
+		Tags: b.Tags,
 	}
 }
 
 func newBookmark(bookmark entity.Bookmark) Bookmark {
 	return Bookmark{
 		ID:   bookmark.ID,
-		Name: bookmark.ID,
+		Name: bookmark.Name,
 		Url:  bookmark.Url,
+		Tags: bookmark.Tags,
 	}
 }
 
@@ -100,6 +105,36 @@ func (s *service) Delete(ctx context.Context, id string) error {
 	err := s.repo.Delete(ctx, id)
 	if err != nil {
 		logger.Errorw("Failed to delete", zap.String("ID", id))
+		return err
+	}
+
+	return nil
+}
+
+func (s *service) AddTag(ctx context.Context, bookmarkId string, tag string) error {
+	logger := s.logger.Sugar()
+	defer func() {
+		_ = logger.Sync()
+	}()
+
+	err := s.repo.AddTag(ctx, entity.Tag{BookmarkID: bookmarkId, Tag: tag})
+	if err != nil {
+		logger.Errorw("Failed to add tag", zap.String("BookmarkID", bookmarkId), zap.String("Tag", tag))
+		return err
+	}
+
+	return nil
+}
+
+func (s *service) RemoveTag(ctx context.Context, bookmarkId string, tag string) error {
+	logger := s.logger.Sugar()
+	defer func() {
+		_ = logger.Sync()
+	}()
+
+	err := s.repo.RemoveTag(ctx, entity.Tag{BookmarkID: bookmarkId, Tag: tag})
+	if err != nil {
+		logger.Errorw("Failed to remove tag", zap.String("BookmarkID", bookmarkId), zap.String("Tag", tag))
 		return err
 	}
 

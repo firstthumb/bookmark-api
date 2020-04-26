@@ -18,20 +18,30 @@ type Api interface {
 }
 
 func (r *resource) RegisterHandlers(rg *gin.RouterGroup) {
-	rg.POST("/bookmarks/", r.create)
+	rg.POST("/bookmarks", r.create)
 	rg.GET("/bookmarks/:id", r.get)
 	rg.PUT("/bookmarks/:id", r.update)
 	rg.DELETE("/bookmarks/:id", r.delete)
+	rg.POST("/bookmarks/:id/tags/:tag", r.addTag)
+	rg.DELETE("/bookmarks/:id/tags/:tag", r.removeTag)
 }
 
 type CreateBookmarkRequest struct {
-	Name string `json:"name"`
-	Url  string `json:"url"`
+	Name string   `json:"name"`
+	Url  string   `json:"url"`
+	Tags []string `json:"tags"`
 }
 
 type UpdateBookmarkRequest struct {
 	Name string `json:"name"`
 	Url  string `json:"url"`
+}
+
+type BookmarkResponse struct {
+	ID   string   `json:"id"`
+	Name string   `json:"name"`
+	Url  string   `json:"url"`
+	Tags []string `json:"tags"`
 }
 
 type resource struct {
@@ -55,6 +65,7 @@ func (r *resource) create(c *gin.Context) {
 	result, err := r.service.Create(c.Request.Context(), Bookmark{
 		Name: request.Name,
 		Url:  request.Url,
+		Tags: request.Tags,
 	})
 
 	if err != nil {
@@ -62,7 +73,13 @@ func (r *resource) create(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, result)
+	response := &BookmarkResponse{
+		ID:   result.ID,
+		Name: result.Name,
+		Url:  result.Url,
+		Tags: result.Tags,
+	}
+	c.JSON(http.StatusCreated, response)
 }
 
 func (r *resource) get(c *gin.Context) {
@@ -83,7 +100,13 @@ func (r *resource) get(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	response := &BookmarkResponse{
+		ID:   result.ID,
+		Name: result.Name,
+		Url:  result.Url,
+		Tags: result.Tags,
+	}
+	c.JSON(http.StatusOK, response)
 }
 
 func (r *resource) update(c *gin.Context) {
@@ -116,7 +139,13 @@ func (r *resource) update(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	response := &BookmarkResponse{
+		ID:   result.ID,
+		Name: result.Name,
+		Url:  result.Url,
+		Tags: result.Tags,
+	}
+	c.JSON(http.StatusOK, response)
 }
 
 func (r *resource) delete(c *gin.Context) {
@@ -129,6 +158,44 @@ func (r *resource) delete(c *gin.Context) {
 	err := r.service.Delete(c.Request.Context(), id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, errors.InternalServerError("Failed to delete bookmark"))
+		return
+	}
+
+	c.Status(http.StatusOK)
+}
+
+func (r *resource) addTag(c *gin.Context) {
+	logger := r.logger.Sugar()
+	defer func() {
+		_ = logger.Sync()
+	}()
+
+	bookmarkId := c.Param("id")
+	tag := c.Param("tag")
+
+	err := r.service.AddTag(c.Request.Context(), bookmarkId, tag)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, errors.InternalServerError("Failed to add tag"))
+		return
+	}
+
+	c.Status(http.StatusCreated)
+}
+
+func (r *resource) removeTag(c *gin.Context) {
+	logger := r.logger.Sugar()
+	defer func() {
+		_ = logger.Sync()
+	}()
+
+	bookmarkId := c.Param("id")
+	tag := c.Param("tag")
+
+	err := r.service.RemoveTag(c.Request.Context(), bookmarkId, tag)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, errors.InternalServerError("Failed to remove tag"))
 		return
 	}
 

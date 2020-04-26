@@ -4,6 +4,7 @@ build:
 	go fmt ./...
 	env GOOS=linux go build -ldflags="-s -w" -o bin/bookmark/lambda/main function/lambda/bookmark_lambda.go 
 	env GOOS=linux go build -ldflags="-s -w" -o bin/bookmark/worker/main function/worker/bookmark_worker.go 
+	env GOOS=linux go build -ldflags="-s -w" -o bin/auth/lambda/main function/authorizer/authorizer.go 
 lint:
 	golangci-lint run
 clean:
@@ -11,8 +12,8 @@ clean:
 generate:
 	go generate ./...
 run:
-	go run cmd/bookmark/main.go
+	gow run cmd/bookmark/main.go
 test:
-	go test
+	go test ./...
 deploy: clean build
 	sls deploy --verbose --force

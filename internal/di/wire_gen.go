@@ -6,6 +6,7 @@
 package di
 
 import (
+	"bookmark-api/internal/auth"
 	"bookmark-api/internal/bookmark"
 	"bookmark-api/pkg/logger"
 	"github.com/google/wire"
@@ -21,6 +22,14 @@ func CreateBookmarkApi() (bookmark.Api, error) {
 	return api, nil
 }
 
+func CreateAuthApi() (auth.Api, error) {
+	googleOAuth := auth.NewGoogleOAuth()
+	zapLogger := logger.NewLogger()
+	authAuth := auth.NewAuth(googleOAuth, zapLogger)
+	api := auth.NewApi(authAuth, zapLogger)
+	return api, nil
+}
+
 func CreateBookmarkService() (bookmark.Service, error) {
 	zapLogger := logger.NewLogger()
 	repository := bookmark.NewRepository(zapLogger)
@@ -28,6 +37,15 @@ func CreateBookmarkService() (bookmark.Service, error) {
 	return service, nil
 }
 
+func CreateAuth() (*auth.Auth, error) {
+	googleOAuth := auth.NewGoogleOAuth()
+	zapLogger := logger.NewLogger()
+	authAuth := auth.NewAuth(googleOAuth, zapLogger)
+	return authAuth, nil
+}
+
 // wire.go:
 
-var inject = wire.NewSet(logger.Inject, bookmark.Inject)
+var inject = wire.NewSet(logger.Inject, bookmark.Inject, auth.Inject)
+
+var injectAuthorizer = wire.NewSet(logger.Inject, auth.Inject)

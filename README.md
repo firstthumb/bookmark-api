@@ -27,6 +27,8 @@ At this time, you have a RESTful API server running at `http://127.0.0.1:8080`. 
 * `GET /bookmarks/:id`: returns the detailed information of an bookmark
 * `PUT /bookmarks/:id`: updates an existing bookmark
 * `DELETE /bookmarks/:id`: deletes an bookmark
+* `POST /bookmarks/:id/tags/:tag`: adds tag to the bookmark
+* `DELETE /bookmarks/:id/tags/:tag`: deletes tag to the bookmark
 
 ## Project Layout
  
@@ -38,8 +40,10 @@ At this time, you have a RESTful API server running at `http://127.0.0.1:8080`. 
 ├── function             lambda functions
 │   ├── lambda           lambda main function for HTTP
 │   └─- worker           lambda main function for SQS
+│   └─- authorizer       lambda authorizer
 ├── internal             private application
 │   ├── bookmark         bookmark features
+│   ├── auth             auth features
 │   ├── di               wire configuration
 │   ├── entity           entity definitions
 │   └── errors           error types
