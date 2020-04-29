@@ -17,11 +17,12 @@ import (
 
 type Repository interface {
 	Create(ctx context.Context, bookmark entity.Bookmark) (entity.Bookmark, error)
-	Get(ctx context.Context, id string) (entity.Bookmark, error)
+	Get(ctx context.Context, username, id string) (entity.Bookmark, error)
 	Update(ctx context.Context, bookmark entity.Bookmark) (entity.Bookmark, error)
-	Delete(ctx context.Context, id string) error
-	AddTag(ctx context.Context, tag entity.Tag) error
-	RemoveTag(ctx context.Context, tag entity.Tag) error
+	Delete(ctx context.Context, username, id string) error
+	SearchByName(ctx context.Context, username, name string) ([]entity.Bookmark, error)
+	AddTag(ctx context.Context, username, bookmarkId, tag string) error
+	RemoveTag(ctx context.Context, username, bookmarkId, tag string) error
 }
 
 type repository struct {
@@ -41,18 +42,20 @@ func (r *repository) Create(ctx context.Context, bookmark entity.Bookmark) (enti
 
 	tx := r.db.WriteTx()
 
-	// Create Bookmark
 	tableBookmark := r.db.Table(db.GetTableBookmark())
 
+	// Create Bookmark
 	bookmark.ID = db.GenerateID()
 	bookmark.CreatedAt = time.Now()
 	bookmark.UpdatedAt = time.Now()
-	tx.Put(tableBookmark.Put(bookmark))
+	tx.Put(tableBookmark.Put(bookmark.GetEntity()))
 
-	// Create Tags
-	tableTag := r.db.Table(db.GetTableTag())
-	for _, tag := range bookmark.Tags {
-		tx.Put(tableTag.Put(entity.Tag{Tag: tag, BookmarkID: bookmark.ID}))
+	// Create SearchByName
+	tx.Put(tableBookmark.Put(bookmark.GetSearchByName()))
+
+	// Create SearchByTag
+	for _, searchByTag := range bookmark.GetSearchByTag() {
+		tx.Put(tableBookmark.Put(searchByTag))
 	}
 
 	err := tx.Run()
@@ -64,7 +67,7 @@ func (r *repository) Create(ctx context.Context, bookmark entity.Bookmark) (enti
 	return bookmark, nil
 }
 
-func (r *repository) Get(ctx context.Context, id string) (entity.Bookmark, error) {
+func (r *repository) Get(ctx context.Context, username, bookmarkId string) (entity.Bookmark, error) {
 	logger := r.logger.Sugar()
 	defer func() {
 		_ = logger.Sync()
@@ -72,10 +75,13 @@ func (r *repository) Get(ctx context.Context, id string) (entity.Bookmark, error
 
 	table := r.db.Table(db.GetTableBookmark())
 
+	hashId, rangeId := entity.GetSearchKeyByID(username, bookmarkId)
 	var result entity.Bookmark
-	err := table.Get("id", id).One(&result)
+	err := table.Get("id", hashId).
+		Range("range", "EQ", rangeId).
+		One(&result)
 	if err != nil {
-		logger.Errorw("Failed to get bookmark", zap.Error(err))
+		logger.Errorw("Failed to get bookmark", zap.String("Username", username), zap.String("ID", bookmarkId), zap.Error(err))
 		switch err {
 		case dynamo.ErrNotFound:
 			return entity.Bookmark{}, errors.ErrNotFound
@@ -93,18 +99,21 @@ func (r *repository) Update(ctx context.Context, bookmark entity.Bookmark) (enti
 		_ = logger.Sync()
 	}()
 
-	freshBookmark, err := r.Get(ctx, bookmark.ID)
+	tx := r.db.WriteTx()
+
+	freshBookmark, err := r.Get(ctx, bookmark.Username, bookmark.ID)
 	if err != nil {
 		return entity.Bookmark{}, err
 	}
 
 	table := r.db.Table((db.GetTableBookmark()))
 
-	// Don't update tags here
-	freshBookmark.Name = bookmark.Name
+	// Update URL only
 	freshBookmark.Url = bookmark.Url
 	freshBookmark.UpdatedAt = time.Now()
-	err = table.Put(freshBookmark).Run()
+	tx.Put(table.Put(freshBookmark))
+
+	err = tx.Run()
 	if err != nil {
 		logger.Errorw("Failed to update bookmark", zap.String("ID", freshBookmark.ID), zap.Error(err))
 		return entity.Bookmark{}, err
@@ -113,62 +122,81 @@ func (r *repository) Update(ctx context.Context, bookmark entity.Bookmark) (enti
 	return entity.Bookmark{}, nil
 }
 
-func (r *repository) Delete(ctx context.Context, id string) error {
+func (r *repository) Delete(ctx context.Context, username, bookmarkId string) error {
 	logger := r.logger.Sugar()
 	defer func() {
 		_ = logger.Sync()
 	}()
 
-	bookmark, err := r.Get(ctx, id)
-	if err != nil {
-		return err
-	}
-
-	tx := r.db.WriteTx()
-
-	tableBookmark := r.db.Table((db.GetTableBookmark()))
-	tableTag := r.db.Table((db.GetTableTag()))
-
-	tx.Delete(tableBookmark.Delete("id", id))
-	for _, tag := range bookmark.Tags {
-		tx.Delete(tableTag.Delete("tag", tag).Range("bookmark_id", id))
-	}
-
-	err = tx.Run()
-	if err != nil {
-		logger.Errorw("Failed to delete bookmark", zap.String("ID", id), zap.Error(err))
-		return err
-	}
+	// TODO: Implement this
 
 	return nil
 }
 
-func (r *repository) AddTag(ctx context.Context, tag entity.Tag) error {
+func (r *repository) SearchByName(ctx context.Context, username string, name string) ([]entity.Bookmark, error) {
 	logger := r.logger.Sugar()
 	defer func() {
 		_ = logger.Sync()
 	}()
 
-	bookmark, err := r.Get(ctx, tag.BookmarkID)
+	tableBookmark := r.db.Table(db.GetTableBookmark())
+
+	var result []entity.Bookmark
+
+	// Search by name
+	hashId, rangeId := entity.GetSearchKeyByName(username, name)
+	var searchByNameResult []entity.BookmarkSearchByName
+	err := tableBookmark.Get("id", hashId).
+		Range("range", "BEGINS_WITH", rangeId).
+		All(&searchByNameResult)
+
+	if err != nil {
+		logger.Errorw("Failed to search bookmark", zap.String("HashId", hashId), zap.String("RangeId", rangeId), zap.Error(err))
+		return []entity.Bookmark{}, err
+	}
+
+	// Fetch every bookmark by ID
+	for _, bookmarkName := range searchByNameResult {
+		hashId, rangeId = entity.GetSearchKeyByID(username, bookmarkName.GetBookmarkId())
+		var bookmark entity.Bookmark
+		err = tableBookmark.Get("id", hashId).
+			Range("range", "EQ", rangeId).One(&bookmark)
+
+		if err != nil {
+			logger.Errorw("Could not fetch bookmark", zap.String("HashId", hashId), zap.String("RangeId", rangeId))
+		} else {
+			result = append(result, bookmark)
+		}
+	}
+
+	return result, nil
+}
+
+func (r *repository) AddTag(ctx context.Context, username, bookmarkId, tag string) error {
+	logger := r.logger.Sugar()
+	defer func() {
+		_ = logger.Sync()
+	}()
+
+	bookmark, err := r.Get(ctx, username, bookmarkId)
 	if err != nil {
 		return err
 	}
 
-	if funk.Contains(bookmark.Tags, tag.Tag) {
-		logger.Errorw("Already has tag", zap.String("BookmarkID", tag.BookmarkID), zap.String("Tag", tag.Tag), zap.Error(err))
+	if funk.Contains(bookmark.Tags, tag) {
+		logger.Errorw("Already has tag", zap.String("BookmarkID", bookmarkId), zap.String("Tag", tag), zap.Error(err))
 		return errors.ErrAlreadyExist
 	}
 
 	tx := r.db.WriteTx()
 
 	// Update Bookmark
-	tableBookmark := r.db.Table(db.GetTableBookmark())
-	bookmark.Tags = append(bookmark.Tags, tag.Tag)
-	tx.Put(tableBookmark.Put(bookmark))
+	table := r.db.Table(db.GetTableBookmark())
+	bookmark.Tags = append(bookmark.Tags, tag)
+	tx.Put(table.Put(bookmark))
 
 	// Add Tag
-	tableTag := r.db.Table(db.GetTableTag())
-	tx.Put(tableTag.Put(tag))
+	tx.Put(table.Put(entity.NewBookmarkSearchByTag(username, bookmarkId, tag)))
 
 	err = tx.Run()
 	if err != nil {
@@ -179,32 +207,32 @@ func (r *repository) AddTag(ctx context.Context, tag entity.Tag) error {
 	return nil
 }
 
-func (r *repository) RemoveTag(ctx context.Context, tag entity.Tag) error {
+func (r *repository) RemoveTag(ctx context.Context, username, bookmarkId, tag string) error {
 	logger := r.logger.Sugar()
 	defer func() {
 		_ = logger.Sync()
 	}()
 
-	bookmark, err := r.Get(ctx, tag.BookmarkID)
+	bookmark, err := r.Get(ctx, username, bookmarkId)
 	if err != nil {
 		return err
 	}
 
-	if !funk.Contains(bookmark.Tags, tag.Tag) {
-		logger.Errorw("Bookmark has not tag", zap.String("BookmarkID", tag.BookmarkID), zap.String("Tag", tag.Tag), zap.Error(err))
+	if !funk.Contains(bookmark.Tags, tag) {
+		logger.Errorw("Bookmark has not tag", zap.String("BookmarkID", bookmarkId), zap.String("Tag", tag), zap.Error(err))
 		return errors.ErrInvalidParam
 	}
 
 	tx := r.db.WriteTx()
 
 	// Update Bookmark
-	tableBookmark := r.db.Table(db.GetTableBookmark())
-	bookmark.Tags = funk.FilterString(bookmark.Tags, func(s string) bool { return s != tag.Tag })
-	tx.Put(tableBookmark.Put(bookmark))
+	table := r.db.Table(db.GetTableBookmark())
+	bookmark.Tags = funk.FilterString(bookmark.Tags, func(s string) bool { return s != tag })
+	tx.Put(table.Put(bookmark))
 
-	// Add Tag
-	tableTag := r.db.Table(db.GetTableTag())
-	tx.Put(tableTag.Put(tag))
+	// Delete Tag
+	searchTag := entity.NewBookmarkSearchByTag(username, bookmarkId, tag)
+	tx.Delete(table.Delete("id", searchTag.Username).Range("range", searchTag.Tag))
 
 	err = tx.Run()
 	if err != nil {

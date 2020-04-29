@@ -72,10 +72,15 @@ func (a *Auth) AuthMiddleware() *jwt.GinJWTMiddleware {
 			username := claims["username"].(string)
 			method := claims["method"].(string)
 
-			return &AuthUser{
+			authUser := &AuthUser{
 				Username: username,
 				Method:   AuthMethod(method),
 			}
+
+			// Save authUser in the context
+			c.Set("user", authUser)
+
+			return authUser
 		},
 
 		Authenticator: func(c *gin.Context) (interface{}, error) {

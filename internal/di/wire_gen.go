@@ -8,6 +8,7 @@ package di
 import (
 	"bookmark-api/internal/auth"
 	"bookmark-api/internal/bookmark"
+	"bookmark-api/internal/user"
 	"bookmark-api/pkg/logger"
 	"github.com/google/wire"
 )
@@ -46,6 +47,6 @@ func CreateAuth() (*auth.Auth, error) {
 
 // wire.go:
 
-var inject = wire.NewSet(logger.Inject, bookmark.Inject, auth.Inject)
+var inject = wire.NewSet(logger.Inject, bookmark.Inject, auth.Inject, user.Inject)
 
 var injectAuthorizer = wire.NewSet(logger.Inject, auth.Inject)

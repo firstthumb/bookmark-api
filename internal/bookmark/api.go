@@ -4,9 +4,11 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/thoas/go-funk"
 	"go.uber.org/zap"
 
 	"bookmark-api/internal/errors"
+	"bookmark-api/pkg/utils"
 )
 
 func NewApi(service Service, logger *zap.Logger) Api {
@@ -24,6 +26,8 @@ func (r *resource) RegisterHandlers(rg *gin.RouterGroup) {
 	rg.DELETE("/bookmarks/:id", r.delete)
 	rg.POST("/bookmarks/:id/tags/:tag", r.addTag)
 	rg.DELETE("/bookmarks/:id/tags/:tag", r.removeTag)
+
+	rg.GET("/bookmarks", r.searchByName)
 }
 
 type CreateBookmarkRequest struct {
@@ -55,6 +59,8 @@ func (r *resource) create(c *gin.Context) {
 		_ = logger.Sync()
 	}()
 
+	authUser := utils.GetCurrentUser(c)
+
 	request := CreateBookmarkRequest{}
 	if err := c.ShouldBindJSON(&request); err != nil {
 		logger.Errorw("Could not bind payload")
@@ -63,9 +69,10 @@ func (r *resource) create(c *gin.Context) {
 	}
 
 	result, err := r.service.Create(c.Request.Context(), Bookmark{
-		Name: request.Name,
-		Url:  request.Url,
-		Tags: request.Tags,
+		Name:     request.Name,
+		Username: authUser.Username,
+		Url:      request.Url,
+		Tags:     request.Tags,
 	})
 
 	if err != nil {
@@ -89,7 +96,8 @@ func (r *resource) get(c *gin.Context) {
 		return
 	}
 
-	result, err := r.service.Get(c.Request.Context(), id)
+	authUser := utils.GetCurrentUser(c)
+	result, err := r.service.Get(c.Request.Context(), authUser.Username, id)
 	if err != nil {
 		switch err {
 		case errors.ErrNotFound:
@@ -128,10 +136,12 @@ func (r *resource) update(c *gin.Context) {
 		return
 	}
 
+	authUser := utils.GetCurrentUser(c)
 	result, err := r.service.Update(c.Request.Context(), Bookmark{
-		ID:   id,
-		Name: request.Name,
-		Url:  request.Url,
+		Username: authUser.Username,
+		ID:       id,
+		Name:     request.Name,
+		Url:      request.Url,
 	})
 
 	if err != nil {
@@ -155,13 +165,40 @@ func (r *resource) delete(c *gin.Context) {
 		return
 	}
 
-	err := r.service.Delete(c.Request.Context(), id)
+	authUser := utils.GetCurrentUser(c)
+	err := r.service.Delete(c.Request.Context(), authUser.Username, id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, errors.InternalServerError("Failed to delete bookmark"))
 		return
 	}
 
 	c.Status(http.StatusOK)
+}
+
+func (r *resource) searchByName(c *gin.Context) {
+	query := c.Query("query")
+	if len(query) < 0 {
+		c.JSON(http.StatusBadRequest, errors.BadRequest("Query is missing"))
+		return
+	}
+
+	authUser := utils.GetCurrentUser(c)
+	result, err := r.service.SearchByName(c.Request.Context(), authUser.Username, query)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, errors.InternalServerError("Failed to delete bookmark"))
+		return
+	}
+
+	response := funk.Map(result, func(bookmark Bookmark) BookmarkResponse {
+		return BookmarkResponse{
+			ID:   bookmark.ID,
+			Name: bookmark.Name,
+			Url:  bookmark.Url,
+			Tags: bookmark.Tags,
+		}
+	})
+
+	c.JSON(http.StatusOK, response)
 }
 
 func (r *resource) addTag(c *gin.Context) {
@@ -173,7 +210,8 @@ func (r *resource) addTag(c *gin.Context) {
 	bookmarkId := c.Param("id")
 	tag := c.Param("tag")
 
-	err := r.service.AddTag(c.Request.Context(), bookmarkId, tag)
+	authUser := utils.GetCurrentUser(c)
+	err := r.service.AddTag(c.Request.Context(), authUser.Username, bookmarkId, tag)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, errors.InternalServerError("Failed to add tag"))
@@ -192,7 +230,8 @@ func (r *resource) removeTag(c *gin.Context) {
 	bookmarkId := c.Param("id")
 	tag := c.Param("tag")
 
-	err := r.service.RemoveTag(c.Request.Context(), bookmarkId, tag)
+	authUser := utils.GetCurrentUser(c)
+	err := r.service.RemoveTag(c.Request.Context(), authUser.Username, bookmarkId, tag)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, errors.InternalServerError("Failed to remove tag"))

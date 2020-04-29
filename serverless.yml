@@ -110,15 +110,20 @@ resources:
       Type: AWS::DynamoDB::Table
       Properties:
         TableName: ${self:custom.dynamo-bookmark-name}
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
         AttributeDefinitions:
           - AttributeName: id
+            AttributeType: S
+          - AttributeName: range
             AttributeType: S
         KeySchema:
           - AttributeName: id
             KeyType: HASH
-        ProvisionedThroughput:
-          ReadCapacityUnits: 1
-          WriteCapacityUnits: 1
+          - AttributeName: range
+            KeyType: RANGE
+
     TagCatalog:
       Type: AWS::DynamoDB::Table
       Properties:

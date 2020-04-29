@@ -35,17 +35,17 @@ func (m *MockRepository) EXPECT() *MockRepositoryMockRecorder {
 }
 
 // AddTag mocks base method
-func (m *MockRepository) AddTag(arg0 context.Context, arg1 entity.Tag) error {
+func (m *MockRepository) AddTag(arg0 context.Context, arg1, arg2, arg3 string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddTag", arg0, arg1)
+	ret := m.ctrl.Call(m, "AddTag", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // AddTag indicates an expected call of AddTag
-func (mr *MockRepositoryMockRecorder) AddTag(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) AddTag(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddTag", reflect.TypeOf((*MockRepository)(nil).AddTag), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddTag", reflect.TypeOf((*MockRepository)(nil).AddTag), arg0, arg1, arg2, arg3)
 }
 
 // Create mocks base method
@@ -64,46 +64,61 @@ func (mr *MockRepositoryMockRecorder) Create(arg0, arg1 interface{}) *gomock.Cal
 }
 
 // Delete mocks base method
-func (m *MockRepository) Delete(arg0 context.Context, arg1 string) error {
+func (m *MockRepository) Delete(arg0 context.Context, arg1, arg2 string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Delete", arg0, arg1)
+	ret := m.ctrl.Call(m, "Delete", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Delete indicates an expected call of Delete
-func (mr *MockRepositoryMockRecorder) Delete(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) Delete(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockRepository)(nil).Delete), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockRepository)(nil).Delete), arg0, arg1, arg2)
 }
 
 // Get mocks base method
-func (m *MockRepository) Get(arg0 context.Context, arg1 string) (entity.Bookmark, error) {
+func (m *MockRepository) Get(arg0 context.Context, arg1, arg2 string) (entity.Bookmark, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get", arg0, arg1)
+	ret := m.ctrl.Call(m, "Get", arg0, arg1, arg2)
 	ret0, _ := ret[0].(entity.Bookmark)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Get indicates an expected call of Get
-func (mr *MockRepositoryMockRecorder) Get(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) Get(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockRepository)(nil).Get), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockRepository)(nil).Get), arg0, arg1, arg2)
 }
 
 // RemoveTag mocks base method
-func (m *MockRepository) RemoveTag(arg0 context.Context, arg1 entity.Tag) error {
+func (m *MockRepository) RemoveTag(arg0 context.Context, arg1, arg2, arg3 string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RemoveTag", arg0, arg1)
+	ret := m.ctrl.Call(m, "RemoveTag", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // RemoveTag indicates an expected call of RemoveTag
-func (mr *MockRepositoryMockRecorder) RemoveTag(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) RemoveTag(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveTag", reflect.TypeOf((*MockRepository)(nil).RemoveTag), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveTag", reflect.TypeOf((*MockRepository)(nil).RemoveTag), arg0, arg1, arg2, arg3)
+}
+
+// SearchByName mocks base method
+func (m *MockRepository) SearchByName(arg0 context.Context, arg1, arg2 string) ([]entity.Bookmark, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SearchByName", arg0, arg1, arg2)
+	ret0, _ := ret[0].([]entity.Bookmark)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SearchByName indicates an expected call of SearchByName
+func (mr *MockRepositoryMockRecorder) SearchByName(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchByName", reflect.TypeOf((*MockRepository)(nil).SearchByName), arg0, arg1, arg2)
 }
 
 // Update mocks base method

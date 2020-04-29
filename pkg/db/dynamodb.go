@@ -16,7 +16,7 @@ func GetTableBookmark() string {
 	if v == "" {
 		return "dev-bookmark-api-bookmark-table"
 	}
-	return os.Getenv("DYNAMO_TABLE_BOOKMARK")
+	return v
 }
 
 func GetTableTag() string {
@@ -24,7 +24,15 @@ func GetTableTag() string {
 	if v == "" {
 		return "dev-bookmark-api-tag-table"
 	}
-	return os.Getenv("DYNAMO_TABLE_TAG")
+	return v
+}
+
+func GetTableUser() string {
+	v := os.Getenv("DYNAMO_TABLE_USER")
+	if v == "" {
+		return "dev-bookmark-api-user-table"
+	}
+	return v
 }
 
 func GenerateID() string {

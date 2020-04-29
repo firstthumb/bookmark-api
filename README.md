@@ -6,6 +6,8 @@ This is simple bookmark api that you could handle your bookmarks easily
 Features to be implemented
 * CRUD operations with bookmark
 * Authenticate users with Google Auth 
+* Search bookmarks by tag, name
+* Partition bookmarks by creation date
 
 ## Getting Started
 
@@ -23,6 +25,7 @@ make run
 
 At this time, you have a RESTful API server running at `http://127.0.0.1:8080`. It provides the following endpoints:
 
+* `GET /auth/signin/google`: google auth
 * `POST /bookmarks`: creates new bookmark
 * `GET /bookmarks/:id`: returns the detailed information of an bookmark
 * `PUT /bookmarks/:id`: updates an existing bookmark
