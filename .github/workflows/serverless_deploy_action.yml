@@ -23,7 +23,7 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: "10.x"
-      - run: npm install serverless-offline --save-dev
+      - run: npm install serverless-offline serverless-domain-manager --save-dev
       - name: Build
         run: make build
       - name: serverless deploy
