@@ -14,15 +14,7 @@ import (
 func GetTableBookmark() string {
 	v := os.Getenv("DYNAMO_TABLE_BOOKMARK")
 	if v == "" {
-		return "dev-bookmark-api-bookmark-table"
-	}
-	return v
-}
-
-func GetTableTag() string {
-	v := os.Getenv("DYNAMO_TABLE_TAG")
-	if v == "" {
-		return "dev-bookmark-api-tag-table"
+		return "dev-bookmark-api-bookmark-catalog"
 	}
 	return v
 }
@@ -30,7 +22,7 @@ func GetTableTag() string {
 func GetTableUser() string {
 	v := os.Getenv("DYNAMO_TABLE_USER")
 	if v == "" {
-		return "dev-bookmark-api-user-table"
+		return "dev-bookmark-api-user-catalog"
 	}
 	return v
 }

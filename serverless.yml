@@ -42,6 +42,7 @@ custom:
     useDocker: true
   customDomain:
     domainName: api.booklog.link
+    certificateName: "*.booklog.link"
     stage: ${self:provider.stage}
     createRoute53Record: true
   endpoints:
@@ -49,8 +50,7 @@ custom:
   region: ${self:provider.region}
   stage: ${opt:stage, self:provider.stage}
   prefix: ${self:custom.stage}-${self:service}
-  dynamo-bookmark-name: ${self:custom.prefix}-bookmark-table
-  dynamo-tag-name: ${self:custom.prefix}-tag-table
+  dynamo-bookmark-name: ${self:custom.prefix}-bookmark-catalog
   sqs-bookmark-name: ${self:custom.prefix}-processing-queue
   dynamodb:
     stages:
@@ -128,24 +128,6 @@ resources:
             KeyType: HASH
           - AttributeName: range
             KeyType: RANGE
-
-    TagCatalog:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: ${self:custom.dynamo-tag-name}
-        AttributeDefinitions:
-          - AttributeName: tag
-            AttributeType: S
-          - AttributeName: bookmark_id
-            AttributeType: S
-        KeySchema:
-          - AttributeName: tag
-            KeyType: HASH
-          - AttributeName: bookmark_id
-            KeyType: RANGE
-        ProvisionedThroughput:
-          ReadCapacityUnits: 1
-          WriteCapacityUnits: 1
 
     BookmarkQueueExample:
       Type: AWS::SQS::Queue
