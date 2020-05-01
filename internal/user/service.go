@@ -19,14 +19,6 @@ type User struct {
 	LastLoginAt time.Time
 }
 
-func (u *User) getEntity() entity.User {
-	return entity.User{
-		Username:    u.Username,
-		Method:      u.Method,
-		LastLoginAt: u.LastLoginAt,
-	}
-}
-
 func newUser(user entity.User) User {
 	return User{
 		Username:    user.Username,

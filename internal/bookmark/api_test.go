@@ -1,6 +1,7 @@
 package bookmark
 
 import (
+	"bookmark-api/internal/auth"
 	"bookmark-api/internal/bookmark/mocks"
 	"bookmark-api/internal/entity"
 	"bookmark-api/pkg/logger"
@@ -21,10 +22,11 @@ import (
 
 func getFakeBookmark() entity.Bookmark {
 	return entity.Bookmark{
-		ID:   string(faker.RandomInt(0, 10000)),
-		Name: faker.Lorem().Word(),
-		Url:  faker.Internet().Url(),
-		Tags: []string{faker.Hacker().Adjective()},
+		Username: "USERNAME_1",
+		ID:       "BOOKMARK_2",
+		Name:     faker.Lorem().Word(),
+		Url:      faker.Internet().Url(),
+		Tags:     []string{faker.Hacker().Adjective()},
 	}
 }
 
@@ -40,6 +42,10 @@ func TestCreateRoute(t *testing.T) {
 	api := NewApi(bookmarkService, zapLogger)
 
 	r := gin.Default()
+
+	r.Use(func(ctx *gin.Context) {
+		ctx.Set("user", &auth.AuthUser{Username: "USERNAME_1", Method: "google"})
+	})
 
 	api.RegisterHandlers(r.Group("/api"))
 
@@ -67,7 +73,6 @@ func TestCreateRoute(t *testing.T) {
 			t.Fatalf("Expected bookmark response, got %v", err)
 		}
 
-		assert.Equal(t, bookmark.ID, result.ID)
 		assert.Equal(t, bookmark.Name, result.Name)
 		assert.Equal(t, bookmark.Url, result.Url)
 		assert.Equal(t, bookmark.Tags, result.Tags)
@@ -94,64 +99,10 @@ func TestCreateRoute(t *testing.T) {
 			t.Fatalf("Expected bookmark response, got %v", err)
 		}
 
-		assert.Equal(t, bookmark.ID, result.ID)
 		assert.Equal(t, bookmark.Name, result.Name)
 		assert.Equal(t, bookmark.Url, result.Url)
 		assert.Nil(t, bookmark.Tags)
 	})
-}
-
-func TestUpdateRoute(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	zapLogger := logger.NewLogger()
-
-	mockRepository := mocks.NewMockRepository(ctrl)
-	bookmarkService := NewService(mockRepository, zapLogger)
-
-	api := NewApi(bookmarkService, zapLogger)
-
-	r := gin.Default()
-
-	api.RegisterHandlers(r.Group("/api"))
-
-	ts := httptest.NewServer(r)
-	defer ts.Close()
-
-	t.Run("UpdateBookmarkSuccessfully", func(t *testing.T) {
-		bookmark := getFakeBookmark()
-		mockRepository.EXPECT().Update(gomock.Any(), gomock.Any()).Return(bookmark, nil).Times(1)
-
-		requestBody, _ := json.Marshal(CreateBookmarkRequest{
-			Name: bookmark.Name,
-			Url:  bookmark.Url,
-			Tags: bookmark.Tags,
-		})
-
-		req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/api/bookmarks/%s", ts.URL, bookmark.ID), strings.NewReader(string(requestBody)))
-		if err != nil {
-			t.Fatalf("Expected no error, got %v", err)
-		}
-		client := &http.Client{}
-		resp, err := client.Do(req)
-		if err != nil {
-			t.Fatalf("Expected no error, got %v", err)
-		}
-		assert.Equal(t, 200, resp.StatusCode)
-
-		var result BookmarkResponse
-		err = json.NewDecoder(resp.Body).Decode(&result)
-		if err != nil {
-			t.Fatalf("Expected bookmark response, got %v", err)
-		}
-
-		assert.Equal(t, bookmark.ID, result.ID)
-		assert.Equal(t, bookmark.Name, result.Name)
-		assert.Equal(t, bookmark.Url, result.Url)
-		assert.Equal(t, bookmark.Tags, result.Tags)
-	})
-
 }
 
 func TestTagRoute(t *testing.T) {
@@ -167,6 +118,10 @@ func TestTagRoute(t *testing.T) {
 
 	r := gin.Default()
 
+	r.Use(func(ctx *gin.Context) {
+		ctx.Set("user", &auth.AuthUser{Username: "USERNAME_1", Method: "google"})
+	})
+
 	api.RegisterHandlers(r.Group("/api"))
 
 	ts := httptest.NewServer(r)
@@ -174,7 +129,7 @@ func TestTagRoute(t *testing.T) {
 
 	t.Run("AddTag", func(t *testing.T) {
 		bookmark := getFakeBookmark()
-		mockRepository.EXPECT().AddTag(gomock.Any(), gomock.Any()).Return(nil).Times(1)
+		mockRepository.EXPECT().AddTag(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).Times(1)
 
 		tag := "test_tag"
 		req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/bookmarks/%s/tags/%s", ts.URL, bookmark.ID, tag), strings.NewReader(""))
@@ -191,7 +146,7 @@ func TestTagRoute(t *testing.T) {
 
 	t.Run("RemoveTag", func(t *testing.T) {
 		bookmark := getFakeBookmark()
-		mockRepository.EXPECT().RemoveTag(gomock.Any(), gomock.Any()).Return(nil).Times(1)
+		mockRepository.EXPECT().RemoveTag(gomock.Any(), gomock.Eq(bookmark.Username), gomock.Any(), gomock.Any()).Return(nil).Times(1)
 
 		tag := "test_tag"
 		req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/api/bookmarks/%s/tags/%s", ts.URL, bookmark.ID, tag), strings.NewReader(""))
