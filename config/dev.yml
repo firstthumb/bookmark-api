@@ -1,6 +1,7 @@
 ENV: dev
 REGION: ${self:custom.region}
 DYNAMO_TABLE_BOOKMARK: ${self:custom.dynamo-bookmark-name}
+DYNAMO_TABLE_USER: ${self:custom.dynamo-user-name}
 SQS_QUEUE_BOOKMARK: ${self:custom.sqs-bookmark-name}
 CONFIG_DYNAMODB_ENDPOINT: ${self:custom.endpoints.dynamodb-url}
 OAUTH_REDIRECT_URL: https://9xh8qqo6ac.execute-api.us-east-2.amazonaws.com/dev/callback

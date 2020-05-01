@@ -13,15 +13,18 @@ import (
 	"golang.org/x/oauth2"
 
 	jwt "github.com/appleboy/gin-jwt/v2"
+
+	"bookmark-api/internal/user"
 )
 
-func NewAuth(google *GoogleOAuth, logger *zap.Logger) *Auth {
-	return &Auth{Google: google, logger: logger}
+func NewAuth(google *GoogleOAuth, userService user.Service, logger *zap.Logger) *Auth {
+	return &Auth{Google: google, userService: userService, logger: logger}
 }
 
 type Auth struct {
-	Google *GoogleOAuth
-	logger *zap.Logger
+	Google      *GoogleOAuth
+	userService user.Service
+	logger      *zap.Logger
 }
 
 func (a *Auth) Session() gin.HandlerFunc {
@@ -90,7 +93,15 @@ func (a *Auth) AuthMiddleware() *jwt.GinJWTMiddleware {
 				return nil, errors.New("Token does not exist")
 			}
 
-			return a.Google.VerifyToken(token.(*oauth2.Token))
+			authUser, err := a.Google.VerifyToken(token.(*oauth2.Token))
+			if err != nil {
+				return nil, err
+			}
+
+			// Update last login date
+			_, _ = a.userService.UpdateLastLogin(c.Request.Context(), authUser.Username, string(authUser.Method))
+
+			return authUser, nil
 		},
 
 		Authorizator: func(data interface{}, c *gin.Context) bool {

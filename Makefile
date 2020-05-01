@@ -1,4 +1,4 @@
-.PHONY: build clean deploy
+.PHONY: deploy
 
 build:
 	go fmt ./...

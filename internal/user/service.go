@@ -9,7 +9,8 @@ import (
 )
 
 type Service interface {
-	UpdateLastLogin(ctx context.Context, username string) (User, error)
+	CreateUser(ctx context.Context, username, method string) (User, error)
+	UpdateLastLogin(ctx context.Context, username, method string) (User, error)
 }
 
 type User struct {
@@ -43,7 +44,27 @@ func NewService(repo Repository, logger *zap.Logger) Service {
 	return &service{repo, logger}
 }
 
-func (s *service) UpdateLastLogin(ctx context.Context, username string) (User, error) {
+func (s *service) CreateUser(ctx context.Context, username, method string) (User, error) {
+	logger := s.logger.Sugar()
+	defer func() {
+		_ = logger.Sync()
+	}()
+
+	user, err := s.repo.Create(ctx, entity.User{
+		Username:    username,
+		Method:      method,
+		LastLoginAt: time.Now(),
+	})
+
+	if err != nil {
+		logger.Errorw("Could not create user", zap.String("Username", username))
+		return User{}, err
+	}
+
+	return newUser(user), nil
+}
+
+func (s *service) UpdateLastLogin(ctx context.Context, username, method string) (User, error) {
 	logger := s.logger.Sugar()
 	defer func() {
 		_ = logger.Sync()
@@ -51,8 +72,8 @@ func (s *service) UpdateLastLogin(ctx context.Context, username string) (User, e
 
 	user, err := s.repo.Get(ctx, username)
 	if err != nil {
-		logger.Errorw("Could not find user", zap.String("Username", username))
-		return User{}, err
+		// Create new user
+		return s.CreateUser(ctx, username, method)
 	}
 
 	user.LastLoginAt = time.Now()

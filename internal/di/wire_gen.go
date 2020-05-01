@@ -26,7 +26,9 @@ func CreateBookmarkApi() (bookmark.Api, error) {
 func CreateAuthApi() (auth.Api, error) {
 	googleOAuth := auth.NewGoogleOAuth()
 	zapLogger := logger.NewLogger()
-	authAuth := auth.NewAuth(googleOAuth, zapLogger)
+	repository := user.NewRepository(zapLogger)
+	service := user.NewService(repository, zapLogger)
+	authAuth := auth.NewAuth(googleOAuth, service, zapLogger)
 	api := auth.NewApi(authAuth, zapLogger)
 	return api, nil
 }
@@ -41,7 +43,9 @@ func CreateBookmarkService() (bookmark.Service, error) {
 func CreateAuth() (*auth.Auth, error) {
 	googleOAuth := auth.NewGoogleOAuth()
 	zapLogger := logger.NewLogger()
-	authAuth := auth.NewAuth(googleOAuth, zapLogger)
+	repository := user.NewRepository(zapLogger)
+	service := user.NewService(repository, zapLogger)
+	authAuth := auth.NewAuth(googleOAuth, service, zapLogger)
 	return authAuth, nil
 }
 

@@ -51,6 +51,7 @@ custom:
   stage: ${opt:stage, self:provider.stage}
   prefix: ${self:custom.stage}-${self:service}
   dynamo-bookmark-name: ${self:custom.prefix}-bookmark-catalog
+  dynamo-user-name: ${self:custom.prefix}-user-catalog
   sqs-bookmark-name: ${self:custom.prefix}-processing-queue
   dynamodb:
     stages:
@@ -127,6 +128,23 @@ resources:
           - AttributeName: id
             KeyType: HASH
           - AttributeName: range
+            KeyType: RANGE
+    UserCatalog:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.dynamo-user-name}
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        AttributeDefinitions:
+          - AttributeName: username
+            AttributeType: S
+          - AttributeName: method
+            AttributeType: S
+        KeySchema:
+          - AttributeName: username
+            KeyType: HASH
+          - AttributeName: method
             KeyType: RANGE
 
     BookmarkQueueExample:

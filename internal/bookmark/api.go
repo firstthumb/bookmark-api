@@ -8,7 +8,7 @@ import (
 	"go.uber.org/zap"
 
 	"bookmark-api/internal/errors"
-	"bookmark-api/pkg/utils"
+	"bookmark-api/internal/session"
 )
 
 func NewApi(service Service, logger *zap.Logger) Api {
@@ -59,7 +59,7 @@ func (r *resource) create(c *gin.Context) {
 		_ = logger.Sync()
 	}()
 
-	authUser := utils.GetCurrentUser(c)
+	authUser := session.GetCurrentUser(c)
 
 	request := CreateBookmarkRequest{}
 	if err := c.ShouldBindJSON(&request); err != nil {
@@ -96,7 +96,7 @@ func (r *resource) get(c *gin.Context) {
 		return
 	}
 
-	authUser := utils.GetCurrentUser(c)
+	authUser := session.GetCurrentUser(c)
 	result, err := r.service.Get(c.Request.Context(), authUser.Username, id)
 	if err != nil {
 		switch err {
@@ -136,7 +136,7 @@ func (r *resource) update(c *gin.Context) {
 		return
 	}
 
-	authUser := utils.GetCurrentUser(c)
+	authUser := session.GetCurrentUser(c)
 	result, err := r.service.Update(c.Request.Context(), Bookmark{
 		Username: authUser.Username,
 		ID:       id,
@@ -165,7 +165,7 @@ func (r *resource) delete(c *gin.Context) {
 		return
 	}
 
-	authUser := utils.GetCurrentUser(c)
+	authUser := session.GetCurrentUser(c)
 	err := r.service.Delete(c.Request.Context(), authUser.Username, id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, errors.InternalServerError("Failed to delete bookmark"))
@@ -182,7 +182,7 @@ func (r *resource) searchByName(c *gin.Context) {
 		return
 	}
 
-	authUser := utils.GetCurrentUser(c)
+	authUser := session.GetCurrentUser(c)
 	result, err := r.service.SearchByName(c.Request.Context(), authUser.Username, query)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, errors.InternalServerError("Failed to delete bookmark"))
@@ -210,7 +210,7 @@ func (r *resource) addTag(c *gin.Context) {
 	bookmarkId := c.Param("id")
 	tag := c.Param("tag")
 
-	authUser := utils.GetCurrentUser(c)
+	authUser := session.GetCurrentUser(c)
 	err := r.service.AddTag(c.Request.Context(), authUser.Username, bookmarkId, tag)
 
 	if err != nil {
@@ -230,7 +230,7 @@ func (r *resource) removeTag(c *gin.Context) {
 	bookmarkId := c.Param("id")
 	tag := c.Param("tag")
 
-	authUser := utils.GetCurrentUser(c)
+	authUser := session.GetCurrentUser(c)
 	err := r.service.RemoveTag(c.Request.Context(), authUser.Username, bookmarkId, tag)
 
 	if err != nil {

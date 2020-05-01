@@ -59,6 +59,7 @@ func (r *repository) Get(ctx context.Context, username string) (entity.User, err
 
 	table := r.db.Table(db.GetTableUser())
 
+	// TODO: Support multiple methods
 	var result entity.User
 	err := table.Get("username", username).One(&result)
 	if err != nil {
