@@ -63,7 +63,6 @@ func (r *repository) Get(ctx context.Context, username string) (entity.User, err
 	var result entity.User
 	err := table.Get("username", username).One(&result)
 	if err != nil {
-		logger.Errorw("Failed to get user", zap.Error(err))
 		switch err {
 		case dynamo.ErrNotFound:
 			return entity.User{}, errors.ErrNotFound

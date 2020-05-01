@@ -1,17 +1,12 @@
 # Bookmark API
+
 [![Build Status](https://travis-ci.org/firstthumb/bookmark-api.svg?branch=master)](https://travis-ci.org/firstthumb/bookmark-api)
 
 This is simple bookmark api that you could handle your bookmarks easily
 
-Features to be implemented
-* CRUD operations with bookmark
-* Authenticate users with Google Auth 
-* Search bookmarks by tag, name
-* Partition bookmarks by creation date
-
 ## Getting Started
 
-Please follow [the instructions](https://golang.org/doc/install) to install Go on your computer. 
+Please follow [the instructions](https://golang.org/doc/install) to install Go on your computer.
 
 After installing Go, run the following commands to start:
 
@@ -25,16 +20,20 @@ make run
 
 At this time, you have a RESTful API server running at `http://127.0.0.1:8080`. It provides the following endpoints:
 
-* `GET /auth/signin/google`: google auth
-* `POST /bookmarks`: creates new bookmark
-* `GET /bookmarks/:id`: returns the detailed information of an bookmark
-* `PUT /bookmarks/:id`: updates an existing bookmark
-* `DELETE /bookmarks/:id`: deletes an bookmark
-* `POST /bookmarks/:id/tags/:tag`: adds tag to the bookmark
-* `DELETE /bookmarks/:id/tags/:tag`: deletes tag to the bookmark
+- `GET /signin/google`: google auth, creates JWT Token
+- `POST /bookmarks`: creates new bookmark
+- `GET /bookmarks/:id`: returns the detailed information of an bookmark
+- `PUT /bookmarks/:id`: updates an existing bookmark
+- `DELETE /bookmarks/:id`: deletes an bookmark
+- `POST /bookmarks/:id/tags/:tag`: adds tag to the bookmark
+- `DELETE /bookmarks/:id/tags/:tag`: deletes tag to the bookmark
+
+## DEMO
+
+Create AccessToken with [api.booklog.link/singin/google](https://api.booklog.link/signin/google)
 
 ## Project Layout
- 
+
 ```
 .
 ├── cmd                  main applications of the project
@@ -45,13 +44,15 @@ At this time, you have a RESTful API server running at `http://127.0.0.1:8080`. 
 │   └─- worker           lambda main function for SQS
 │   └─- authorizer       lambda authorizer
 ├── internal             private application
-│   ├── bookmark         bookmark features
 │   ├── auth             auth features
+│   ├── bookmark         bookmark features
 │   ├── di               wire configuration
 │   ├── entity           entity definitions
-│   └── errors           error types
+│   ├── errors           error types
+│   ├── session          session operations
+│   └── user             user features
 ├── pkg                  public library code
 │   ├── db               database implementation
 │   ├── logger           logger
-│   └── utils            utilities 
+│   └── utils            utilities
 ```
