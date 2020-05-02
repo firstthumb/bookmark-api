@@ -43,6 +43,7 @@ func (a *Auth) VerifyToken(token string) (Claim, error) {
 	var payload Claim
 	_, err := verifier.Verify([]byte(token), hs, &payload)
 	if err != nil {
+		logger.Errorw("Failed to verify", zap.String("Token", token), zap.Error(err))
 		return Claim{}, err
 	}
 
@@ -60,6 +61,11 @@ func (a *Auth) AuthMiddleware() *jwt.GinJWTMiddleware {
 		IdentityKey: "username",
 
 		PayloadFunc: func(data interface{}) jwt.MapClaims {
+			logger := a.logger.Sugar()
+			defer func() {
+				_ = logger.Sync()
+			}()
+
 			if v, ok := data.(*AuthUser); ok {
 				return jwt.MapClaims{
 					"username": v.Username,
@@ -67,11 +73,17 @@ func (a *Auth) AuthMiddleware() *jwt.GinJWTMiddleware {
 				}
 			}
 
+			logger.Errorw("Wrong token claim")
+
 			return jwt.MapClaims{}
 		},
 
 		IdentityHandler: func(c *gin.Context) interface{} {
 			claims := jwt.ExtractClaims(c)
+			if claims["username"] == nil || claims["method"] == nil {
+				return nil
+			}
+
 			username := claims["username"].(string)
 			method := claims["method"].(string)
 

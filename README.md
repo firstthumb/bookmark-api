@@ -23,14 +23,41 @@ At this time, you have a RESTful API server running at `http://127.0.0.1:8080`. 
 - `GET /signin/google`: google auth, creates JWT Token
 - `POST /bookmarks`: creates new bookmark
 - `GET /bookmarks/:id`: returns the detailed information of an bookmark
-- `PUT /bookmarks/:id`: updates an existing bookmark
-- `DELETE /bookmarks/:id`: deletes an bookmark
 - `POST /bookmarks/:id/tags/:tag`: adds tag to the bookmark
 - `DELETE /bookmarks/:id/tags/:tag`: deletes tag to the bookmark
 
 ## DEMO
 
 Create AccessToken with [api.booklog.link/singin/google](https://api.booklog.link/signin/google)
+
+```shell
+curl -X GET https://api.booklog.link/api/v1/bookmarks/{BOOKMARK_ID} -H 'Authorization: Bearer {TOKEN}'
+
+curl -X POST https://api.booklog.link/api/v1/bookmarks -H 'Authorization: Bearer {TOKEN}' \
+    -d '{
+        "name": "Google",
+        "url": "https://www.google.com",
+        "tags": ["google", "search", "engine"]
+    }'
+
+curl -X GET https://api.booklog.link/api/v1/bookmarks?query=Google -H 'Authorization: Bearer {TOKEN}'
+
+curl -X POST https://api.booklog.link/api/v1/bookmarks/{BOOKMARK_ID}/tags/{TAG} -H 'Authorization: Bearer {TOKEN}'
+
+curl -X DELETE https://api.booklog.link/api/v1/bookmarks/{BOOKMARK_ID}/tags/{TAG} -H 'Authorization: Bearer {TOKEN}'
+
+```
+
+## DynamoDB Structure
+
+| ID                  |         RANGE          |               Action |
+| ------------------- | :--------------------: | -------------------: |
+| USERNAME-{USERNAME} |    NAME-{NAME}-{ID}    |         SearchByName |
+| USERNAME-{USERNAME} |     TAG-{TAG}-{ID}     |          SearchByTag |
+| USERNAME-{USERNAME} | CREATED-{CREATED}-{ID} | PartitionByCreatedAt |
+| USERNAME-{USERNAME} |     BOOKMARK-{ID}      |        Bookmark Data |
+
+I am planning to use [Lambda Store](https://lambda.store/) for caching.
 
 ## Project Layout
 

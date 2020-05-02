@@ -48,6 +48,7 @@ func Handler(req events.APIGatewayCustomAuthorizerRequest) (events.APIGatewayCus
 
 	claim, err := authorizerApi.VerifyToken(bearerToken)
 	if err != nil {
+		log.Printf("Unauthorized. Token : %s, Error : %v", token, err)
 		return events.APIGatewayCustomAuthorizerResponse{}, errors.New("Unauthorized")
 	}
 
