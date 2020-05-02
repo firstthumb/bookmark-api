@@ -26,6 +26,13 @@ jobs:
       - run: npm install serverless-offline serverless-domain-manager --save-dev
       - name: Build
         run: make build
+      - name: Create secret env file
+        run: |
+          cat > secrets.yml << EOF
+          clientId: ${{ secrets.GOOGLE_CLIENT_ID }}
+          clientSecret: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          oauthKey: ${{ secrets.OAUTH_KEY }}
+          EOF
       - name: serverless deploy
         uses: serverless/github-action@master
         with:

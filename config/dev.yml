@@ -6,3 +6,6 @@ SQS_QUEUE_BOOKMARK: ${self:custom.sqs-bookmark-name}
 CONFIG_DYNAMODB_ENDPOINT: ${self:custom.endpoints.dynamodb-url}
 OAUTH_REDIRECT_URL: https://api.booklog.link/callback
 OAUTH_REALM: firstthumb.auth0.com
+GOOGLE_CLIENT_ID: ${self:custom.clientId}
+GOOGLE_CLIENT_SECRET: ${self:custom.clientSecret}
+OAUTH_KEY: ${self:custom.oauthKey}

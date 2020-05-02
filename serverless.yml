@@ -53,6 +53,7 @@ custom:
   dynamo-bookmark-name: ${self:custom.prefix}-bookmark-catalog
   dynamo-user-name: ${self:custom.prefix}-user-catalog
   sqs-bookmark-name: ${self:custom.prefix}-processing-queue
+  secrets: ${file(secrets.yml)}
   dynamodb:
     stages:
       - dev
