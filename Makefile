@@ -2,9 +2,9 @@
 
 build:
 	go fmt ./...
-	env GOOS=linux go build -ldflags="-s -w" -o bin/bookmark/lambda/main function/lambda/bookmark_lambda.go 
-	env GOOS=linux go build -ldflags="-s -w" -o bin/bookmark/worker/main function/worker/bookmark_worker.go 
-	env GOOS=linux go build -ldflags="-s -w" -o bin/auth/lambda/main function/authorizer/authorizer.go 
+	env GOOS=linux go build -ldflags="-s -w" -o bin/bookmark/lambda/main function/lambda/*.go
+	env GOOS=linux go build -ldflags="-s -w" -o bin/bookmark/worker/main function/worker/*.go
+	env GOOS=linux go build -ldflags="-s -w" -o bin/auth/lambda/main function/authorizer/*.go
 lint:
 	golangci-lint run
 clean:
