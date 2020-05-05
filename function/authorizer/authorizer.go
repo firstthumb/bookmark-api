@@ -1,45 +1,23 @@
 package main
 
 import (
-	"bookmark-api/internal/auth"
-	"bookmark-api/internal/di"
 	"errors"
+	"fmt"
 	"log"
 	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/joho/godotenv"
+
+	"bookmark-api/internal/auth"
+	"bookmark-api/internal/di"
 )
 
 var authorizerApi *auth.Auth
 
 func init() {
 	authorizerApi, _ = di.CreateAuth()
-}
-
-func generatePolicy(principalId, effect, resource string, username string, method string) events.APIGatewayCustomAuthorizerResponse {
-	authResponse := events.APIGatewayCustomAuthorizerResponse{PrincipalID: principalId}
-
-	if effect != "" && resource != "" {
-		authResponse.PolicyDocument = events.APIGatewayCustomAuthorizerPolicy{
-			Version: "2012-10-17",
-			Statement: []events.IAMPolicyStatement{
-				{
-					Action:   []string{"execute-api:Invoke"},
-					Effect:   effect,
-					Resource: []string{resource},
-				},
-			},
-		}
-	}
-
-	authResponse.Context = map[string]interface{}{
-		"username": username,
-		"method":   method,
-	}
-
-	return authResponse
 }
 
 func Handler(req events.APIGatewayCustomAuthorizerRequest) (events.APIGatewayCustomAuthorizerResponse, error) {
@@ -52,7 +30,25 @@ func Handler(req events.APIGatewayCustomAuthorizerRequest) (events.APIGatewayCus
 		return events.APIGatewayCustomAuthorizerResponse{}, errors.New("Unauthorized")
 	}
 
-	return generatePolicy("user", "Allow", req.MethodArn, claim.Username, claim.Method), nil
+	methodArn := NewMethodArn(req.MethodArn)
+	apiGatewayArn := NewAPIGatewayArn(methodArn.APIGatewayArn)
+	principalID := fmt.Sprintf("user|%s", claim.Username)
+
+	resp := NewAuthorizerResponse(principalID, methodArn.AwsAccount)
+	resp.Region = methodArn.Region
+	resp.APIID = apiGatewayArn.APIID
+	resp.Stage = apiGatewayArn.Stage
+	// TODO: Be more restrictive
+	resp.AllowMethod(All, "/api/*")
+
+	resp.Context = map[string]interface{}{
+		"username": claim.Username,
+		"method":   claim.Method,
+	}
+
+	fmt.Printf("%+v", resp.APIGatewayCustomAuthorizerResponse)
+
+	return resp.APIGatewayCustomAuthorizerResponse, nil
 }
 
 func main() {

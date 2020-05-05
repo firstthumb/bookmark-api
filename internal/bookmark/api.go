@@ -20,14 +20,18 @@ type Api interface {
 }
 
 func (r *resource) RegisterHandlers(rg *gin.RouterGroup) {
+	// Search bookmarks
+	rg.GET("/bookmarks", r.searchByName)
+
+	// Crud operations
 	rg.POST("/bookmarks", r.create)
 	rg.GET("/bookmarks/:id", r.get)
 	rg.PUT("/bookmarks/:id", r.update)
 	rg.DELETE("/bookmarks/:id", r.delete)
+
+	// Add remove tags
 	rg.POST("/bookmarks/:id/tags/:tag", r.addTag)
 	rg.DELETE("/bookmarks/:id/tags/:tag", r.removeTag)
-
-	rg.GET("/bookmarks", r.searchByName)
 }
 
 type CreateBookmarkRequest struct {

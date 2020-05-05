@@ -18,6 +18,7 @@ bin
 *.out
 
 .env
+secrets.yml
 
 .dynamodb
 .idea

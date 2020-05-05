@@ -1,6 +1,7 @@
 {
   "devDependencies": {
     "serverless-domain-manager": "^3.3.2",
-    "serverless-offline": "^6.1.4"
+    "serverless-offline": "^6.1.4",
+    "serverless-puresec-cli": "^1.2.1"
   }
 }

@@ -56,8 +56,8 @@ func (a *Auth) AuthMiddleware() *jwt.GinJWTMiddleware {
 	middleware, err := jwt.New(&jwt.GinJWTMiddleware{
 		Realm:       os.Getenv("OAUTH_REALM"),
 		Key:         []byte(os.Getenv("OAUTH_KEY")),
-		Timeout:     time.Hour * 99999,
-		MaxRefresh:  time.Hour * 99999,
+		Timeout:     time.Hour * 24,
+		MaxRefresh:  time.Hour * 24 * 7,
 		IdentityKey: "username",
 
 		PayloadFunc: func(data interface{}) jwt.MapClaims {
