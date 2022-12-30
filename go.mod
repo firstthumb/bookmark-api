@@ -6,7 +6,7 @@ require (
 	cloud.google.com/go v0.38.0 // indirect
 	github.com/appleboy/gin-jwt/v2 v2.6.3
 	github.com/aws/aws-lambda-go v1.16.0
-	github.com/aws/aws-sdk-go v1.30.7
+	github.com/aws/aws-sdk-go v1.33.0
 	github.com/awslabs/aws-lambda-go-api-proxy v0.6.0
 	github.com/boj/redistore v0.0.0-20180917114910-cd5dcc76aeff // indirect
 	github.com/futurenda/google-auth-id-token-verifier v0.0.0-20170311140316-2a5b89f28b7e
